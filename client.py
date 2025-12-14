@@ -7,7 +7,7 @@ URL_API = 'http://127.0.0.1:8000'
 
 def limpiarPantalla():
     # 'nt' es Windows, 'posix' es Linux/Mac
-    if os.name == 'nt':     # Windows
+    if os.name == 'nt':     # Windows 
         os.system('cls')
     else:                   # Linux/Mac
         os.system('clear')
@@ -20,7 +20,8 @@ def mostrar_menu():
   print('4- Mostrar entidades existentes por provincia y las categorias de la misma')
   print('5- Mostrar la ubicacion de una entidad')
   print('6- Modificar el nombre de una entidad')
-  print('7- Eliminar una entidad')
+  print('7- Agregar una nueva entidad')
+  print('8- Eliminar una entidad')
   print('0- SALIR\n')
 
 opcion = 999
@@ -31,7 +32,7 @@ while opcion != 0:
   mostrar_menu()
   opcion = int(input('Seleccione una opción: '))
 
-  while (opcion < 1 or opcion > 6) and opcion != 0:
+  while (opcion < 1 or opcion > 8) and opcion != 0:
     limpiarPantalla()
     print(f'La opcion {opcion} no es valida.\n')
     mostrar_menu()
@@ -66,7 +67,7 @@ while opcion != 0:
         limpiarPantalla()
       else:
         limpiarPantalla()
-        print('Error. Codigo: ', response.status_code)
+        print(f"Error inesperado. Código: {response.status_code}")
         input("\nPresione Enter para continuar...")
         limpiarPantalla()
     except requests.exceptions.ConnectionError:
@@ -74,7 +75,7 @@ while opcion != 0:
       print('Error al intentar conectarse a la API')
       input("\nPresione Enter para continuar...")
       limpiarPantalla()
-      
+
   elif opcion == 2:
     limpiarPantalla()
     print('1- Seleccionar provincia para filtrar\n2- Mostrar sin filtros')
@@ -103,7 +104,7 @@ while opcion != 0:
           limpiarPantalla()
         else:
           limpiarPantalla()
-          print('Error. Codigo: ', response.status_code)
+          print(f"Error inesperado. Código: {response.status_code}")
           input("\nPresione Enter para continuar...")
           limpiarPantalla()
       except requests.exceptions.ConnectionError:
@@ -124,7 +125,7 @@ while opcion != 0:
           limpiarPantalla()
         else:
           limpiarPantalla()
-          print('Error. Codigo: ', response.status_code)
+          print(f"Error inesperado. Código: {response.status_code}")
           input("\nPresione Enter para continuar...")
           limpiarPantalla()
       except requests.exceptions.ConnectionError:
@@ -162,7 +163,7 @@ while opcion != 0:
         limpiarPantalla()
       else:
         limpiarPantalla()
-        print('Error. Codigo: ', response.status_code)
+        print(f"Error inesperado. Código: {response.status_code}")
         input("\nPresione Enter para continuar...")
         limpiarPantalla()
     except requests.exceptions.ConnectionError:
@@ -186,7 +187,7 @@ while opcion != 0:
       limpiarPantalla()
       prov = str(input('Escriba el nombre de una provincia: '))
       limpiarPantalla()
-      print('\n1- Municipio')
+      print('1- Municipio')
       print('2- Comision municipal')
       print('3- Comision de fomento')
       print('4- Comuna')
@@ -209,19 +210,19 @@ while opcion != 0:
 
       params = {'provincia': prov}
       if cat == 1:
-        params['categoria'] = 'Municipio'
+        params['categoria'] = 'municipio'
       if cat == 2:
-        params['categoria'] = 'Comision municipal'
+        params['categoria'] = 'comision municipal'
       if cat == 3:
-        params['categoria'] = 'Comision de fomento'
+        params['categoria'] = 'comision de fomento'
       if cat == 4:
-        params['categoria'] = 'Comuna'
+        params['categoria'] = 'comuna'
       if cat == 5:
-        params['categoria'] = 'Delegacion municipal'
+        params['categoria'] = 'delegacion municipal'
       if cat == 6:
-        params['categoria'] = 'Comuna rural'
+        params['categoria'] = 'comuna rural'
       if cat == 7:
-        params['categoria'] = 'Junta vecinal'
+        params['categoria'] = 'junta vecinal'
 
       try:
         response = requests.get(f'{URL_API}/entidades-por-provincia', params=params)
@@ -234,7 +235,7 @@ while opcion != 0:
           limpiarPantalla()
         else:
           limpiarPantalla()
-          print('Error. Codigo: ', response.status_code)
+          print(f"Error inesperado. Código: {response.status_code}")
           input("\nPresione Enter para continuar...")
           limpiarPantalla()
       except requests.exceptions.ConnectionError:
@@ -260,7 +261,7 @@ while opcion != 0:
           limpiarPantalla()
         else:
           limpiarPantalla()
-          print('Error. Codigo: ', response.status_code)
+          print(f"Error inesperado. Código: {response.status_code}")
           input("\nPresione Enter para continuar...")
           limpiarPantalla()
       except requests.exceptions.ConnectionError:
@@ -282,8 +283,10 @@ while opcion != 0:
     entidad = str(input('Escriba el nombre de una entidad: '))
     limpiarPantalla()
     
-    params['provincia'] = prov
-    params['nombreEntidad'] = entidad
+    params = {
+      'provincia': prov,
+      'nombreEntidad': entidad
+    }
     
     try:
       response = requests.get(f'{URL_API}/entidad-mapa', params=params)
@@ -296,7 +299,7 @@ while opcion != 0:
         limpiarPantalla()
       else:
         limpiarPantalla()
-        print('Error. Codigo: ', response.status_code)
+        print(f"Error inesperado. Código: {response.status_code}")
         input("\nPresione Enter para continuar...")
         limpiarPantalla()
     except requests.exceptions.ConnectionError:
@@ -304,6 +307,147 @@ while opcion != 0:
       print('Error al intentar conectarse a la API')
       input("\nPresione Enter para continuar...")
       limpiarPantalla()
+
+  elif opcion == 6:
+    limpiarPantalla()
+    prov = input('Escriba el nombre de la provincia: ')
+    nombreActual = input('Escriba el nombre actual de la entidad a modificar: ')
+    limpiarPantalla()
+
+    print("\nDatos a insertar. Dejar vacio el campo que no se desee modificar.")
+    nuevoNombre = input('Nuevo nombre: ')
+    categoria = input('Nueva categoría: ')
+
+    if not nuevoNombre and not categoria:
+      limpiarPantalla()
+      print("No se ingresaron cambios.")
+      input("\nPresione Enter para continuar...")
+
+    params = {
+      'provincia': prov,
+      'nombreActual': nombreActual
+    }
+    
+    if nuevoNombre:
+      params['nuevoNombre'] = nuevoNombre
+    if categoria:
+      params['categoria'] = categoria
+
+    try:
+      response = requests.patch(f'{URL_API}/cambio-nombres-y-categoria', params=params)
+      limpiarPantalla()
+      if response.status_code == 200:
+        data = response.json()
+        print(f"Mensaje: {data['mensaje']}")
+        print(json.dumps(data['entidad'], indent=4, ensure_ascii=False))
+        input("\nPresione Enter para continuar...")
+        limpiarPantalla()
+      else:
+          limpiarPantalla()
+          print(f"Error inesperado. Código: {response.status_code}")
+          input("\nPresione Enter para continuar...")
+          limpiarPantalla()
+    except requests.exceptions.ConnectionError:
+      limpiarPantalla()
+      print('Error al intentar conectarse a la API')
+      input("\nPresione Enter para continuar...")
+      limpiarPantalla()
+
+  elif opcion == 7:
+    limpiarPantalla()
+    nombre = input('Nombre de la entidad: ')
+    categoria = input('Categoría: ')
+    prov = input('Provincia: ')
+
+    while nombre == '' or categoria == '' or prov == '':
+      limpiarPantalla()
+      print("Los campos Nombre, Categoría y Provincia son obligatorios.")
+      if nombre == '':
+        nombre = input('Nombre de la entidad: ')
+      if categoria == '':
+        categoria = input('Categoría: ')
+      if prov == '':
+        prov = input('Provincia: ')
+
+
+    # 1. Validamos Latitud
+    while True:
+      try:
+        entrada_lat = input('Latitud (ej: -31.40): ')
+        lat = float(entrada_lat) # Si esto falla (vacío o letras), salta al except
+        break # Si llegó acá, es un número válido. Rompemos el bucle.
+      except ValueError:
+        print("El campo Lat es obligatorio. Ingrese una Latitud (ej: -31.40): ")
+
+    while True:
+      try:
+        entrada_lon = input('Longitud (ej: -64.18): ')
+        lon = float(entrada_lon)
+        break
+      except ValueError:
+        print("El campo Lon es obligatorio. Ingrese una Longitud (ej: -64.18): ")
+
+    params = {
+      'nombre': nombre,
+      'categoria': categoria,
+      'provincia': prov,
+      'lat': lat,
+      'lon': lon
+    }
+
+    try:
+      response = requests.post(f'{URL_API}/agregar-entidad', params=params)
+      limpiarPantalla()
+      if response.status_code == 200:
+        data_resp = response.json()
+        print(json.dumps(data_resp['entidad'], indent=4, ensure_ascii=False))
+        input("\nPresione Enter para continuar...")
+      else:
+        print(f"Error inesperado. Código: {response.status_code}")
+        input("\nPresione Enter para continuar...")
+
+    except requests.exceptions.ConnectionError:
+      limpiarPantalla()
+      print('Error al intentar conectarse a la API')
+      input("\nPresione Enter para continuar...")
+      limpiarPantalla()
+
+  elif opcion == 8:
+    limpiarPantalla()
+    idBorrar = str(input('Ingrese el ID de la entidad a eliminar: '))
+
+    if not idBorrar:
+      limpiarPantalla()
+      while idBorrar == '':
+        print('El ID ingresado no es valido.')
+        idBorrar = str(input('Ingrese el ID de la entidad a eliminar: '))
+
+    seguro = input(f"¿Seguro que desea borrar la entidad {idBorrar}? (s/n): ").lower()
+    if seguro != 's':
+      print("Operacion cancelada.")
+      input("\nPresione Enter para continuar...")
+      continue
+
+    try:
+      response = requests.delete(f'{URL_API}/eliminar-entidad', params={'id': idBorrar})
+      limpiarPantalla()
+      if response.status_code == 200:
+        data = response.json()
+        print("Entidad eliminada:")
+        print(json.dumps(data['entidad'], indent=4, ensure_ascii=False))
+        input("\nPresione Enter para continuar...")
+      else:
+        print(f"Error inesperado. Código: {response.status_code}")
+        input("\nPresione Enter para continuar...")
+
+    except requests.exceptions.ConnectionError:
+      limpiarPantalla()
+      print('Error al intentar conectarse a la API')
+      input("\nPresione Enter para continuar...")
+      limpiarPantalla()
+
+    input("\nPresione Enter para continuar...")
+    limpiarPantalla()
 
   elif opcion == 0:
     # limpiarPantalla()

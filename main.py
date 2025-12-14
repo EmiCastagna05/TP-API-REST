@@ -149,20 +149,57 @@ def municipio_mapa(provincia: str, nombreEntidad: str):
 
 @app.patch('/cambio-nombres-y-categoria')
 def reemplazo(provincia: str, nombreActual: str, nuevoNombre: str | None = None, categoria: str | None = None):
-  municipios = data["municipios"]
+  provEncontrada = False
+  entidades = data["entidades"]
 
-  for m in municipios:
-    if (normalizar(m["provincia"]["nombre"]) == normalizar(provincia) and normalizar(m["nombre"]) == normalizar(nombreActual)):
-      if nuevoNombre:
-        m["nombre"] = nuevoNombre
-      if categoria:
-        m["categoria"] = categoria
-      # actualizar nombre_completo
-      m["nombre_completo"] = f"{m['categoria']} {m['nombre']}"
-      return {
-        "mensaje": "Municipio actualizado",
-        "municipio": m
-      }
+  for e in entidades:
+    if normalizar(e["provincia"]["nombre"]) == normalizar(provincia):
+      provEncontrada = True
+      
+      if normalizar(e["nombre"]) == normalizar(nombreActual):
+        if nuevoNombre:
+          e["nombre"] = nuevoNombre
+        if categoria:
+          e["categoria"] = categoria
+        e["nombre_completo"] = f"{e['categoria']} {e['nombre']}"
+        return {
+          "mensaje": "Entidad actualizado",
+          "entidad": e
+        }
+        
+  if not provEncontrada:
+    raise HTTPException(status_code=404)
+  raise HTTPException(status_code=404)
+
+@app.post('/agregar-entidad')
+def agregarEntidad(nombre: str, categoria: str, provincia: str, lat: float, lon: float):
+    ids = [int(e['id']) for e in data['entidades']]
+    nuevoId = max(ids) + 1
+    
+    nuevaEntidad = {
+        "nombre_completo": f"{categoria.capitalize()} {nombre.capitalize()}",
+        "fuente": "Usuario",
+        "nombre": nombre.capitalize(),
+        "id": str(nuevoId),
+        "provincia": {
+            "nombre": provincia.capitalize(),
+            "id": "00"
+        },
+        "categoria": categoria.capitalize(),
+        "centroide": {
+            "lat": lat,
+            "lon": lon
+        }
+    }
+    
+    data['entidades'].append(nuevaEntidad)
+    data['total'] += 1
+    data['cantidad'] += 1
+
+    return {
+        "mensaje": "Entidad creada",
+        "entidad": nuevaEntidad
+    }
 
 @app.delete('/eliminar-entidad')
 def eliminarEntidad(id: str):
@@ -170,9 +207,10 @@ def eliminarEntidad(id: str):
   for i, m in enumerate(entidades):
     if m["id"] == id:
       eliminado = entidades.pop(i)
-      entidades['total'] -= 1
-      entidades['cantidad'] -= 1
+      data['total'] -= 1
+      data['cantidad'] -= 1
       return {
-        "mensaje": "Municipio eliminado",
-        "municipio": eliminado
+        "mensaje": "Entidad eliminada",
+        "entidad": eliminado
       }
+  raise HTTPException(status_code=404)
