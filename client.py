@@ -6,7 +6,6 @@ import os
 URL_API = 'http://127.0.0.1:8000'
 
 def limpiarPantalla():
-    # 'nt' es Windows, 'posix' es Linux/Mac
     if os.name == 'nt':     # Windows 
         os.system('cls')
     else:                   # Linux/Mac
@@ -396,7 +395,7 @@ while opcion != 0:
     }
 
     try:
-      response = requests.post(f'{URL_API}/agregar-entidad', params=params)
+      response = requests.post(f'{URL_API}/agregar-entidad', params=params, auth=('admin', '1234'))
       limpiarPantalla()
       if response.status_code == 200:
         data_resp = response.json()
@@ -414,22 +413,35 @@ while opcion != 0:
 
   elif opcion == 8:
     limpiarPantalla()
-    idBorrar = str(input('Ingrese el ID de la entidad a eliminar: '))
-
-    if not idBorrar:
-      limpiarPantalla()
-      while idBorrar == '':
-        print('El ID ingresado no es valido.')
-        idBorrar = str(input('Ingrese el ID de la entidad a eliminar: '))
-
-    seguro = input(f"¿Seguro que desea borrar la entidad {idBorrar}? (s/n): ").lower()
-    if seguro != 's':
-      print("Operacion cancelada.")
-      input("\nPresione Enter para continuar...")
-      continue
-
+    print('Se requiere autenticacion')
+    user = str(input('Usuario: '))
+    pwd = str(input('Contraseña: '))
+    
     try:
-      response = requests.delete(f'{URL_API}/eliminar-entidad', params={'id': idBorrar})
+      authResponse = requests.get(f'{URL_API}/verificar-auth', auth=(user, pwd))
+      
+      if authResponse.status_code == 401:
+        print('ACCESO DENEGADO. Usuario o Contraseña incorrectos.')
+        input("\nPresione Enter para continuar...")
+        continue
+      
+      limpiarPantalla()
+      print('ACCESO OTORGADO')
+      idBorrar = str(input('Ingrese el ID de la entidad a eliminar: '))
+      
+      if not idBorrar:
+        limpiarPantalla()
+        while idBorrar == '':
+          print('El ID ingresado no es valido.')
+          idBorrar = str(input('Ingrese el ID de la entidad a eliminar: '))
+
+      seguro = input(f"¿Seguro que desea borrar la entidad {idBorrar}? (s/n): ").lower()
+      if seguro != 's':
+        print("Operacion cancelada.")
+        input("\nPresione Enter para continuar...")
+        continue
+
+      response = requests.delete(f'{URL_API}/eliminar-entidad', params={'id': idBorrar}, auth=('admin', '1234'))
       limpiarPantalla()
       if response.status_code == 200:
         data = response.json()
@@ -450,5 +462,4 @@ while opcion != 0:
     limpiarPantalla()
 
   elif opcion == 0:
-    # limpiarPantalla()
     print('\nFIN DEL PROGRAMA\n')

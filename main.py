@@ -1,25 +1,24 @@
+import json
+import secrets
+import unicodedata
 from fastapi import FastAPI, HTTPException, Depends, Request, status
 from fastapi.security import HTTPBasic, HTTPBasicCredentials
-from fastapi.responses import JSONResponse
-from slowapi import Limiter
+from fastapi.responses import JSONResponse  # ??
+from slowapi import Limiter, _rate_limit_exceeded_handler
 from slowapi.util import get_remote_address
 from slowapi.errors import RateLimitExceeded
-import json
-import unicodedata
-import secrets
-
-USUARIO = "admin"
-PASSWORD = "1234"
 
 with open("data.json", "r", encoding="utf-8") as archivo:
   data = json.load(archivo)
 
+limiter = Limiter(key_func=get_remote_address)
 app = FastAPI()
+app.state.limiter = limiter
+app.add_exception_handler(RateLimitExceeded, _rate_limit_exceeded_handler)
 
 security = HTTPBasic()
-
-limiter = Limiter(key_func=get_remote_address)
-app.state.limiter = limiter
+USUARIO = "admin"
+PASSWORD = "1234"
 
 def autenticacion(credentials: HTTPBasicCredentials = Depends(security)):
   user = secrets.compare_digest(credentials.username, USUARIO)
@@ -38,12 +37,17 @@ def normalizar(texto: str) -> str:
   texto = "".join(c for c in texto if unicodedata.category(c) != "Mn")
   return texto
 
+# REVISAR -----------------------------------------------------------------------
 @app.exception_handler(RateLimitExceeded)
 def rate_limit_handler(request: Request, exc: RateLimitExceeded):
   return JSONResponse(
     status_code=429,
     content={"error": "Demasiadas solicitudes, intente más tarde"}
   )
+  
+@app.get('/verificar-auth', dependencies=[Depends(autenticacion)])
+def verificarAuth():
+    return {"mensaje": "Autorizado"}
 
 @app.get('/cantidad-entidades')
 def cantidadEntidades(filtro: str) -> dict[str, int]:
@@ -180,8 +184,7 @@ def municipio_mapa(provincia: str, nombreEntidad: str):
   raise HTTPException(status_code=404)
 
 @app.patch('/cambio-nombres-y-categoria')
-@limiter.limit("5/second")
-def reemplazo(provincia: str, nombreActual: str, nuevoNombre: str | None = None, categoria: str | None = None, user: str = Depends(autenticacion)):
+def reemplazo(provincia: str, nombreActual: str, nuevoNombre: str | None = None, categoria: str | None = None):
   provEncontrada = False
   entidades = data["entidades"]
 
@@ -204,9 +207,9 @@ def reemplazo(provincia: str, nombreActual: str, nuevoNombre: str | None = None,
     raise HTTPException(status_code=404)
   raise HTTPException(status_code=404)
 
-@app.post('/agregar-entidad')
-@limiter.limit("5/second")
-def agregarEntidad(nombre: str, categoria: str, provincia: str, lat: float, lon: float, user: str = Depends(autenticacion)):
+@app.post('/agregar-entidad', dependencies=[Depends(autenticacion)])
+@limiter.limit("5/minute")
+def agregarEntidad(nombre: str, categoria: str, provincia: str, lat: float, lon: float, request: Request):
     ids = [int(e['id']) for e in data['entidades']]
     nuevoId = max(ids) + 1
     
@@ -235,9 +238,9 @@ def agregarEntidad(nombre: str, categoria: str, provincia: str, lat: float, lon:
         "entidad": nuevaEntidad
     }
 
-@app.delete('/eliminar-entidad')
+@app.delete('/eliminar-entidad', dependencies=[Depends(autenticacion)])
 @limiter.limit("5/second")
-def eliminarEntidad(id: str, user: str = Depends(autenticacion)):
+def eliminarEntidad(id: str, request: Request):
   entidades = data['entidades']
   for i, m in enumerate(entidades):
     if m["id"] == id:
