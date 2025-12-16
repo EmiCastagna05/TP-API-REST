@@ -348,7 +348,7 @@ while opcion != 0:
         params['categoria'] = categoria.strip().title()
 
     
-      response = requests.patch(f'{URL_API}/cambio-nombres-y-categoria', params=params)
+      response = requests.patch(f'{URL_API}/cambio-nombres-y-categoria', params=params, auth=(user, pwd))
       limpiarPantalla()
       if response.status_code == 200:
         data = response.json()

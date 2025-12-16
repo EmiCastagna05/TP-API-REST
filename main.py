@@ -183,8 +183,9 @@ def municipio_mapa(provincia: str, nombreEntidad: str):
     raise HTTPException(status_code=404)
   raise HTTPException(status_code=404)
 
-@app.patch('/cambio-nombres-y-categoria')
-def reemplazo(provincia: str, nombreActual: str, nuevoNombre: str | None = None, categoria: str | None = None):
+@app.patch('/cambio-nombres-y-categoria', dependencies=[Depends(autenticacion)])
+@limiter.limit("5/minute")
+def reemplazo(request: Request, provincia: str, nombreActual: str,nuevoNombre: str | None = None, categoria: str | None = None):
   provEncontrada = False
   entidades = data["entidades"]
 
@@ -209,20 +210,20 @@ def reemplazo(provincia: str, nombreActual: str, nuevoNombre: str | None = None,
 
 @app.post('/agregar-entidad', dependencies=[Depends(autenticacion)])
 @limiter.limit("5/minute")
-def agregarEntidad(nombre: str, categoria: str, provincia: str, lat: float, lon: float, request: Request):
+def agregarEntidad(request: Request, nombre: str, categoria: str, provincia: str, lat: float, lon: float):
     ids = [int(e['id']) for e in data['entidades']]
     nuevoId = max(ids) + 1
     
     nuevaEntidad = {
-        "nombre_completo": f"{categoria.capitalize()} {nombre.capitalize()}",
+        "nombre_completo": f"{categoria} {nombre}",
         "fuente": "Usuario",
-        "nombre": nombre.capitalize(),
+        "nombre": nombre,
         "id": str(nuevoId),
         "provincia": {
-            "nombre": provincia.capitalize(),
+            "nombre": provincia,
             "id": "00"
         },
-        "categoria": categoria.capitalize(),
+        "categoria": categoria,
         "centroide": {
             "lat": lat,
             "lon": lon
@@ -240,7 +241,7 @@ def agregarEntidad(nombre: str, categoria: str, provincia: str, lat: float, lon:
 
 @app.delete('/eliminar-entidad', dependencies=[Depends(autenticacion)])
 @limiter.limit("5/second")
-def eliminarEntidad(id: str, request: Request):
+def eliminarEntidad(request: Request, id: str):
   entidades = data['entidades']
   for i, m in enumerate(entidades):
     if m["id"] == id:
