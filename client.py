@@ -309,30 +309,45 @@ while opcion != 0:
 
   elif opcion == 6:
     limpiarPantalla()
-    prov = input('Escriba el nombre de la provincia: ')
-    nombreActual = input('Escriba el nombre actual de la entidad a modificar: ')
-    limpiarPantalla()
-
-    print("\nDatos a insertar. Dejar vacio el campo que no se desee modificar.")
-    nuevoNombre = input('Nuevo nombre: ')
-    categoria = input('Nueva categoría: ')
-
-    if not nuevoNombre and not categoria:
-      limpiarPantalla()
-      print("No se ingresaron cambios.")
-      input("\nPresione Enter para continuar...")
-
-    params = {
-      'provincia': prov,
-      'nombreActual': nombreActual
-    }
+    print('Se requiere autenticacion')
+    user = str(input('Usuario: '))
+    pwd = str(input('Contraseña: '))
     
-    if nuevoNombre:
-      params['nuevoNombre'] = nuevoNombre
-    if categoria:
-      params['categoria'] = categoria
-
     try:
+      authResponse = requests.get(f'{URL_API}/verificar-auth', auth=(user, pwd))
+      
+      if authResponse.status_code == 401:
+        print('ACCESO DENEGADO. Usuario o Contraseña incorrectos.')
+        input("\nPresione Enter para continuar...")
+        continue
+
+      print('ACCESO OTORGADO')
+
+      limpiarPantalla()
+      prov = input('Escriba el nombre de la provincia: ')
+      nombreActual = input('Escriba el nombre actual de la entidad a modificar: ')
+      limpiarPantalla()
+
+      print("\nDatos a insertar. Dejar vacio el campo que no se desee modificar.")
+      nuevoNombre = input('Nuevo nombre: ')
+      categoria = input('Nueva categoría: ')
+
+      if not nuevoNombre and not categoria:
+        limpiarPantalla()
+        print("No se ingresaron cambios.")
+        input("\nPresione Enter para continuar...")
+
+      params = {
+        'provincia': prov,
+        'nombreActual': nombreActual
+      }
+      
+      if nuevoNombre:
+        params['nuevoNombre'] = nuevoNombre.strip().title()
+      if categoria:
+        params['categoria'] = categoria.strip().title()
+
+    
       response = requests.patch(f'{URL_API}/cambio-nombres-y-categoria', params=params)
       limpiarPantalla()
       if response.status_code == 200:
@@ -354,48 +369,58 @@ while opcion != 0:
 
   elif opcion == 7:
     limpiarPantalla()
-    nombre = input('Nombre de la entidad: ')
-    categoria = input('Categoría: ')
-    prov = input('Provincia: ')
-
-    while nombre == '' or categoria == '' or prov == '':
-      limpiarPantalla()
-      print("Los campos Nombre, Categoría y Provincia son obligatorios.")
-      if nombre == '':
-        nombre = input('Nombre de la entidad: ')
-      if categoria == '':
-        categoria = input('Categoría: ')
-      if prov == '':
-        prov = input('Provincia: ')
-
-
-    # 1. Validamos Latitud
-    while True:
-      try:
-        entrada_lat = input('Latitud (ej: -31.40): ')
-        lat = float(entrada_lat) # Si esto falla (vacío o letras), salta al except
-        break # Si llegó acá, es un número válido. Rompemos el bucle.
-      except ValueError:
-        print("El campo Lat es obligatorio. Ingrese una Latitud (ej: -31.40): ")
-
-    while True:
-      try:
-        entrada_lon = input('Longitud (ej: -64.18): ')
-        lon = float(entrada_lon)
-        break
-      except ValueError:
-        print("El campo Lon es obligatorio. Ingrese una Longitud (ej: -64.18): ")
-
-    params = {
-      'nombre': nombre,
-      'categoria': categoria,
-      'provincia': prov,
-      'lat': lat,
-      'lon': lon
-    }
-
+    print('Se requiere autenticacion')
+    user = str(input('Usuario: '))
+    pwd = str(input('Contraseña: '))
+    
     try:
-      response = requests.post(f'{URL_API}/agregar-entidad', params=params, auth=('admin', '1234'))
+      authResponse = requests.get(f'{URL_API}/verificar-auth', auth=(user, pwd))
+      
+      if authResponse.status_code == 401:
+        print('ACCESO DENEGADO. Usuario o Contraseña incorrectos.')
+        input("\nPresione Enter para continuar...")
+        continue
+
+      print('ACCESO OTORGADO')
+
+      limpiarPantalla()
+      nombre = input('Nombre de la entidad: ')
+      categoria = input('Categoría: ')
+      prov = input('Provincia: ')
+
+      while nombre == '' or categoria == '' or prov == '':
+        limpiarPantalla()
+        print("Los campos Nombre, Categoría y Provincia son obligatorios.")
+        if nombre == '':
+          nombre = input('Nombre de la entidad: ')
+        if categoria == '':
+          categoria = input('Categoría: ')
+        if prov == '':
+          prov = input('Provincia: ')
+
+      while True:
+        try:
+          lat = input('Latitud (ej: -31.40): ')
+          break
+        except ValueError:
+          print("El campo Lat es obligatorio. Ingrese una Latitud (ej: -31.40): ")
+
+      while True:
+        try:
+          lon = input('Longitud (ej: -64.18): ')
+          break
+        except ValueError:
+          print("El campo Lon es obligatorio. Ingrese una Longitud (ej: -64.18): ")
+
+      params = {
+        'nombre': nombre.strip().title(),
+        'categoria': categoria.strip().title(),
+        'provincia': prov.strip().title(),
+        'lat': float(lat.strip()),
+        'lon': float(lon.strip())
+      }
+      
+      response = requests.post(f'{URL_API}/agregar-entidad', params=params, auth=(user, pwd))
       limpiarPantalla()
       if response.status_code == 200:
         data_resp = response.json()
@@ -424,9 +449,9 @@ while opcion != 0:
         print('ACCESO DENEGADO. Usuario o Contraseña incorrectos.')
         input("\nPresione Enter para continuar...")
         continue
-      
-      limpiarPantalla()
+
       print('ACCESO OTORGADO')
+
       idBorrar = str(input('Ingrese el ID de la entidad a eliminar: '))
       
       if not idBorrar:
@@ -441,7 +466,7 @@ while opcion != 0:
         input("\nPresione Enter para continuar...")
         continue
 
-      response = requests.delete(f'{URL_API}/eliminar-entidad', params={'id': idBorrar}, auth=('admin', '1234'))
+      response = requests.delete(f'{URL_API}/eliminar-entidad', params={'id': idBorrar}, auth=(user, pwd))
       limpiarPantalla()
       if response.status_code == 200:
         data = response.json()
